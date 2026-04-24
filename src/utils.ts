@@ -5,6 +5,7 @@ import * as tf from "@tensorflow/tfjs";
 import type { MovieProps } from "./types/MoviesProps";
 import type { RatingProps } from "./types/RatingProps";
 import type { BuildMovieVectorsProps } from "./types/BuildMovieVectorsProps";
+import type { RecommendedMovie } from "./types/RecommendedMovie";
 
 export function handleToast(
   messsage: string,
@@ -147,6 +148,7 @@ export function buildMovieVectors(
     const tensor = tf.tensor1d(rawVector);
 
     return {
+      genres: movie.genres,
       movieId: movie.movieId,
       title: movie.title,
       tensor: tensor, // Aqui está o que o TensorFlow vai usar!
@@ -184,11 +186,65 @@ export async function buildAllMoviesVectors(
   });
 }
 
+export function getTop10Recommendations(
+  selectedMoviesVectors: BuildMovieVectorsProps[],
+  allMoviesVectors: BuildMovieVectorsProps[],
+): RecommendedMovie[] {
+  // O tf.tidy garante que a memória da GPU seja limpa no final
+  return tf.tidy(() => {
+    // 1. Criar o "Super Vetor" (Perfil do Usuário)
+    // Como os selecionados foram gerados na thread principal, o tensor deles está intacto
+    const tensoresSelecionados = selectedMoviesVectors.map((m) => m.tensor);
+    const perfilUsuario = tf.stack(tensoresSelecionados).mean(0) as tf.Tensor1D;
+
+    const userNorm = tf.norm(perfilUsuario);
+
+    // 2. Comparar o Perfil com TODOS os filmes
+    const recomendacoesComScore = allMoviesVectors.map((movie) => {
+      // 🔥 A MÁGICA DA CORREÇÃO ESTÁ AQUI 🔥
+      // Recriamos o tensor na thread principal usando o array de números que sobreviveu ao Worker
+      const tensorRealDoFilme = tf.tensor1d(movie.rawVector);
+
+      // Agora usamos o tensorRealDoFilme para a matemática, e não mais o movie.tensor quebrado
+      const movieNorm = tf.norm(tensorRealDoFilme);
+      const dotProduct = tf.dot(perfilUsuario, tensorRealDoFilme);
+
+      const similarityTensor = dotProduct.div(userNorm.mul(movieNorm));
+
+      // Pega o número real da Placa de Vídeo para o JavaScript
+      let similarity = similarityTensor.dataSync()[0];
+
+      // Prevenção de erro: Se um vetor for 100% zerado, a matemática gera um NaN
+      if (isNaN(similarity)) similarity = 0;
+
+      return {
+        movieId: movie.movieId,
+        title: movie.title,
+        genres: movie.genres,
+        probability: Math.round(similarity * 100),
+      };
+    });
+
+    // 3. Criar um filtro rápido para ignorar o que ele já escolheu
+    const idsSelecionados = new Set(
+      selectedMoviesVectors.map((m) => m.movieId),
+    );
+
+    // 4. Filtrar, Ordenar e Cortar o Top 10
+    const top10 = recomendacoesComScore
+      .filter((movie) => !idsSelecionados.has(movie.movieId))
+      .sort((a, b) => b.probability - a.probability)
+      .slice(0, 10);
+
+    return top10;
+  });
+}
+
 export async function getRecommendations(
   selectedMoviesIds: MovieProps[],
   allMovies: MovieProps[],
   allRatings: RatingProps[],
-): Promise<MovieProps[]> {
+): Promise<RecommendedMovie[]> {
   const allGenres = [
     ...new Set(allMovies.flatMap((movie) => movie.genres.split("|"))),
   ];
@@ -206,8 +262,15 @@ export async function getRecommendations(
     allGenres,
   );
 
+  const finalMovies = getTop10Recommendations(
+    moviesSelectedVector,
+    allMoviesVector,
+  );
+
+  console.log("✌️finalMovies --->", finalMovies);
+
   console.log("✌️allMoviesVector --->", allMoviesVector);
   console.log("✌️moviesSelectedVector --->", moviesSelectedVector);
 
-  return []; // Retorna uma lista vazia por enquanto
+  return finalMovies ?? []; // Retorna uma lista vazia por enquanto
 }

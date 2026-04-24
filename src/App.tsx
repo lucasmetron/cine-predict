@@ -11,15 +11,18 @@ import {
 } from "./utils";
 import type { MovieProps } from "./types/MoviesProps";
 import type { RatingProps } from "./types/RatingProps";
+import type { RecommendedMovie } from "./types/RecommendedMovie";
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  console.log("✌️isLoading --->", isLoading);
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
   const [allRatingsState, setAllRatingsState] = useState<RatingProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
   const [movieSelected, setMovieSelected] = useState<MovieProps[]>([]);
-  const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedMovie[]>(
+    [],
+  );
+  console.log("✌️recommendations --->", recommendations);
 
   const toggleMovie = (movie: MovieProps): void => {
     setMovieSelected((prev) =>
@@ -121,6 +124,7 @@ const App: React.FC = () => {
                     <span className="res-genres">
                       {res.genres.replace(/\|/g, ", ")}
                     </span>
+                    <span>Probablidade de assistir: {res.probability}%</span>
                   </div>
                   <div className="res-badge">
                     {/* {(res.score * 100).toFixed(0)}% */}
