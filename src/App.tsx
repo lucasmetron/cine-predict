@@ -1,122 +1,129 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Definição dos gêneros baseada na documentação do MovieLens
+const GENRES = [
+  "Action",
+  "Adventure",
+  "Animation",
+  "Children",
+  "Comedy",
+  "Crime",
+  "Documentary",
+  "Drama",
+  "Fantasy",
+  "Film-Noir",
+  "Horror",
+  "Musical",
+  "Mystery",
+  "Romance",
+  "Sci-Fi",
+  "Thriller",
+  "War",
+  "Western",
+] as const;
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+interface Movie {
+  movieId: number;
+  title: string;
+  genres: string;
 }
 
-export default App
+interface RecommendedMovie extends Movie {
+  score: number;
+}
+
+const ALL_MOVIES: Movie[] = [
+  {
+    movieId: 1,
+    title: "Toy Story",
+    genres: "Adventure|Animation|Children|Comedy|Fantasy",
+  },
+  { movieId: 2, title: "Jumanji", genres: "Adventure|Children|Fantasy" },
+  { movieId: 3, title: "Grumpier Old Men", genres: "Comedy|Romance" },
+  { movieId: 4, title: "Waiting to Exhale", genres: "Comedy|Drama|Romance" },
+  { movieId: 5, title: "Heat", genres: "Action|Crime|Thriller" },
+  { movieId: 32, title: "Twelve Monkeys", genres: "Mystery|Sci-Fi|Thriller" },
+  { movieId: 47, title: "Seven", genres: "Mystery|Thriller" },
+  {
+    movieId: 50,
+    title: "Usual Suspects, The",
+    genres: "Crime|Mystery|Thriller",
+  },
+];
+
+const App: React.FC = () => {
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedMovie[]>(
+    [],
+  );
+
+  const toggleMovie = (id: number): void => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+    setRecommendations([]);
+    console.log("GENRES", GENRES);
+  };
+
+  return (
+    <div className="container">
+      <div className="logo-section">
+        <div className="icon-stack">
+          <div className="icon-react">⚛️</div>
+          <div className="icon-tf">🧠</div>
+        </div>
+        <h1>CinePredict</h1>
+        <p className="subtitle">Selecione filmes para treinar o modelo</p>
+      </div>
+
+      <div className="main-grid">
+        <div className="card">
+          <div className="card-header">
+            <h3>Seus Gostos</h3>
+            <span className="badge">{selectedIds.length} selecionados</span>
+          </div>
+          <div className="movie-list">
+            {ALL_MOVIES.map((movie) => (
+              <button
+                key={movie.movieId}
+                onClick={() => toggleMovie(movie.movieId)}
+                className={`movie-item ${selectedIds.includes(movie.movieId) ? "active" : ""}`}
+              >
+                {movie.title}
+              </button>
+            ))}
+          </div>
+          <button className="btn-predict" onClick={() => {}}>
+            Gerar Predição
+          </button>
+        </div>
+
+        <div className="card">
+          <h3>Recomendações da IA</h3>
+          <div className="recommendation-list">
+            {recommendations.length > 0 ? (
+              recommendations.map((res) => (
+                <div key={res.movieId} className="res-item">
+                  <div className="res-info">
+                    <span className="res-title">{res.title}</span>
+                    <span className="res-genres">
+                      {res.genres.replace(/\|/g, ", ")}
+                    </span>
+                  </div>
+                  <div className="res-badge">
+                    {(res.score * 100).toFixed(0)}%
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="placeholder">Aguardando dados...</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
