@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
 import "./App.css";
+import { genereteListMoviesToLearning, loadMovies } from "./utils";
+import type { MovieProps } from "./types/MoviesProps";
 
 // Definição dos gêneros baseada na documentação do MovieLens
 const GENRES = [
@@ -23,40 +26,11 @@ const GENRES = [
   "Western",
 ] as const;
 
-interface Movie {
-  movieId: number;
-  title: string;
-  genres: string;
-}
-
-interface RecommendedMovie extends Movie {
-  score: number;
-}
-
-const ALL_MOVIES: Movie[] = [
-  {
-    movieId: 1,
-    title: "Toy Story",
-    genres: "Adventure|Animation|Children|Comedy|Fantasy",
-  },
-  { movieId: 2, title: "Jumanji", genres: "Adventure|Children|Fantasy" },
-  { movieId: 3, title: "Grumpier Old Men", genres: "Comedy|Romance" },
-  { movieId: 4, title: "Waiting to Exhale", genres: "Comedy|Drama|Romance" },
-  { movieId: 5, title: "Heat", genres: "Action|Crime|Thriller" },
-  { movieId: 32, title: "Twelve Monkeys", genres: "Mystery|Sci-Fi|Thriller" },
-  { movieId: 47, title: "Seven", genres: "Mystery|Thriller" },
-  {
-    movieId: 50,
-    title: "Usual Suspects, The",
-    genres: "Crime|Mystery|Thriller",
-  },
-];
-
 const App: React.FC = () => {
+  const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
+  const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [recommendations, setRecommendations] = useState<RecommendedMovie[]>(
-    [],
-  );
+  const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
 
   const toggleMovie = (id: number): void => {
     setSelectedIds((prev) =>
@@ -65,6 +39,14 @@ const App: React.FC = () => {
     setRecommendations([]);
     console.log("GENRES", GENRES);
   };
+
+  useEffect(() => {
+    (async () => {
+      const allMovies = await loadMovies();
+      setAllMoviesState(allMovies);
+      setMoviesToLearning(genereteListMoviesToLearning(allMovies));
+    })();
+  }, []);
 
   return (
     <div className="container">
@@ -84,7 +66,7 @@ const App: React.FC = () => {
             <span className="badge">{selectedIds.length} selecionados</span>
           </div>
           <div className="movie-list">
-            {ALL_MOVIES.map((movie) => (
+            {moviesToLearning.map((movie) => (
               <button
                 key={movie.movieId}
                 onClick={() => toggleMovie(movie.movieId)}
@@ -94,9 +76,28 @@ const App: React.FC = () => {
               </button>
             ))}
           </div>
-          <button className="btn-predict" onClick={() => {}}>
-            Gerar Predição
-          </button>
+
+          <div className="btns">
+            <button
+              className="btn-predict"
+              onClick={async () => {
+                setMoviesToLearning(
+                  genereteListMoviesToLearning(allMoviesState),
+                );
+              }}
+            >
+              Gerar outra lista de filmes
+            </button>
+
+            <button
+              className="btn-predict"
+              onClick={async () => {
+                await loadMovies();
+              }}
+            >
+              Gerar Predição
+            </button>
+          </div>
         </div>
 
         <div className="card">
@@ -112,7 +113,7 @@ const App: React.FC = () => {
                     </span>
                   </div>
                   <div className="res-badge">
-                    {(res.score * 100).toFixed(0)}%
+                    {/* {(res.score * 100).toFixed(0)}% */}
                   </div>
                 </div>
               ))
