@@ -4,6 +4,7 @@ import * as tf from "@tensorflow/tfjs";
 
 import type { MovieProps } from "./types/MoviesProps";
 import type { RatingProps } from "./types/RatingProps";
+import type { BuildMovieVectorsProps } from "./types/BuildMovieVectorsProps";
 
 export function handleToast(
   messsage: string,
@@ -156,11 +157,11 @@ export function buildMovieVectors(
   return vectorizedMovies;
 }
 
-export async function processAllMoviesVectors(
+export async function buildAllMoviesVectors(
   allMovies: MovieProps[],
   allRatings: RatingProps[],
   allGenres: string[],
-) {
+): Promise<BuildMovieVectorsProps[]> {
   // Criamos a instância do Worker
   const worker = new Worker(new URL("./movie.worker.ts", import.meta.url), {
     type: "module",
@@ -175,7 +176,6 @@ export async function processAllMoviesVectors(
   return new Promise((resolve) => {
     worker.onmessage = (e) => {
       const allMoviesVector = e.data; // Aqui está o resultado do cálculo
-      console.log("✌️allMoviesVector --->", allMoviesVector);
 
       worker.terminate(); // Importante: Mata o worker para não consumir memória
 
@@ -194,12 +194,13 @@ export async function getRecommendations(
   ];
 
   const moviesRatings = await getRateMovies(selectedMoviesIds, allRatings);
+
   const moviesSelectedVector = buildMovieVectors(
     selectedMoviesIds,
     moviesRatings,
     allGenres,
   );
-  const allMoviesVector = await processAllMoviesVectors(
+  const allMoviesVector = await buildAllMoviesVectors(
     allMovies,
     allRatings,
     allGenres,
