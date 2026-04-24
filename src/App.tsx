@@ -39,8 +39,9 @@ const App: React.FC = () => {
       movieSelected,
       allMoviesState,
       allRatingsState,
-      setIsLoading,
     );
+
+    setIsLoading(false);
 
     setRecommendations(recommendations);
   }

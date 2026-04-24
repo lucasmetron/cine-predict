@@ -188,7 +188,6 @@ export async function getRecommendations(
   selectedMoviesIds: MovieProps[],
   allMovies: MovieProps[],
   allRatings: RatingProps[],
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
 ): Promise<MovieProps[]> {
   const allGenres = [
     ...new Set(allMovies.flatMap((movie) => movie.genres.split("|"))),
@@ -205,8 +204,6 @@ export async function getRecommendations(
     allRatings,
     allGenres,
   );
-
-  setIsLoading(false);
 
   console.log("✌️allMoviesVector --->", allMoviesVector);
   console.log("✌️moviesSelectedVector --->", moviesSelectedVector);
