@@ -15,23 +15,23 @@ const App: React.FC = () => {
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
   const [allRatingsState, setAllRatingsState] = useState<RatingProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [movieSelected, setMovieSelected] = useState<MovieProps[]>([]);
   const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
 
-  const toggleMovie = (id: number): void => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+  const toggleMovie = (movie: MovieProps): void => {
+    setMovieSelected((prev) =>
+      prev.includes(movie) ? prev.filter((m) => m !== movie) : [...prev, movie],
     );
   };
 
   async function loadList() {
-    if (selectedIds.length === 0) {
+    if (movieSelected.length === 0) {
       handleToast("Selecione pelo menos um filme", "error");
       return;
     }
 
     const recommendations = await getRecommendations(
-      selectedIds,
+      movieSelected,
       allMoviesState,
       allRatingsState,
     );
@@ -63,14 +63,14 @@ const App: React.FC = () => {
         <div className="card">
           <div className="card-header">
             <h3>Seus Gostos</h3>
-            <span className="badge">{selectedIds.length} selecionados</span>
+            <span className="badge">{movieSelected.length} selecionados</span>
           </div>
           <div className="movie-list">
             {moviesToLearning.map((movie) => (
               <button
                 key={movie.movieId}
-                onClick={() => toggleMovie(movie.movieId)}
-                className={`movie-item ${selectedIds.includes(movie.movieId) ? "active" : ""}`}
+                onClick={() => toggleMovie(movie)}
+                className={`movie-item ${movieSelected.includes(movie) ? "active" : ""}`}
               >
                 {movie.title}
               </button>
@@ -84,7 +84,7 @@ const App: React.FC = () => {
                 setMoviesToLearning(
                   genereteListMoviesToLearning(allMoviesState),
                 );
-                setSelectedIds([]);
+                setMovieSelected([]);
               }}
             >
               Gerar outra lista de filmes

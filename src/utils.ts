@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { toast } from "react-toastify";
+import * as tf from "@tensorflow/tfjs";
 
 import type { MovieProps } from "./types/MoviesProps";
 import type { RatingProps } from "./types/RatingProps";
@@ -104,18 +105,60 @@ export function genereteListMoviesToLearning(
 }
 
 export async function getRateMovies(
-  moviesListIds: number[],
+  moviesListIds: MovieProps[],
   allRatings: RatingProps[],
 ) {
   const moviesRatings = allRatings.filter((rating) =>
-    moviesListIds.includes(rating.movieId),
+    moviesListIds.some((movie) => movie.movieId === rating.movieId),
   );
 
   return moviesRatings;
 }
 
+export function buildMovieVectors(
+  selectedMovies: MovieProps[],
+  ratings: RatingProps[],
+  allGenres: string[],
+) {
+  const vectorizedMovies = selectedMovies.map((movie) => {
+    // 1. Calcula a média de notas deste filme específico
+    const movieRatings = ratings.filter((r) => r.movieId === movie.movieId);
+    // eslint-disable-next-line no-useless-assignment
+    let averageRating = 3.0; // Nota neutra padrão caso ninguém tenha avaliado
+
+    if (movieRatings.length > 0) {
+      const sum = movieRatings.reduce((acc, curr) => acc + curr.rating, 0);
+      console.log("✌️sum --->", sum);
+      averageRating = sum / movieRatings.length / 5; // Normaliza para 0-1 (considerando nota máxima 5)
+    } else {
+      averageRating = 0.6; // Nota neutra padrão caso ninguém tenha avaliado
+    }
+
+    // 2. Transforma os gêneros em 0s e 1s (One-Hot Encoding)
+    const genresArray = movie.genres.split("|");
+    const genreVector = allGenres.map((genre) =>
+      genresArray.includes(genre) ? 1 : 0,
+    );
+
+    // 3. Monta o Array final do filme (20 posições de gêneros + 1 posição de nota)
+    const rawVector = [...genreVector, averageRating];
+
+    // 4. A Mágica do TF: Transforma o Array comum em um Tensor 1D
+    const tensor = tf.tensor1d(rawVector);
+
+    return {
+      movieId: movie.movieId,
+      title: movie.title,
+      tensor: tensor, // Aqui está o que o TensorFlow vai usar!
+      rawVector: rawVector, // Guardamos o array puro caso precise debugar
+    };
+  });
+
+  return vectorizedMovies;
+}
+
 export async function getRecommendations(
-  selectedMoviesIds: number[],
+  selectedMoviesIds: MovieProps[],
   allMovies: MovieProps[],
   allRatings: RatingProps[],
 ): Promise<MovieProps[]> {
@@ -124,7 +167,13 @@ export async function getRecommendations(
   ];
 
   const moviesRatings = await getRateMovies(selectedMoviesIds, allRatings);
+  const moviesVector = buildMovieVectors(
+    selectedMoviesIds,
+    moviesRatings,
+    allGenres,
+  );
 
+  console.log("✌️moviesVector --->", moviesVector);
   console.log("✌️selectedMoviesIds --->", selectedMoviesIds);
   console.log("✌️moviesRatings --->", moviesRatings);
   console.log("✌️allGenres --->", allGenres);
