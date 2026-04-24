@@ -25,7 +25,7 @@ export async function loadMovies(): Promise<MovieProps[]> {
 
 export function genereteListMoviesToLearning(
   movies: MovieProps[],
-  count: number = 10,
+  count: number = 20,
 ): MovieProps[] {
   const selectedMovies: MovieProps[] = [];
   const usedGenres = new Set<string>();
