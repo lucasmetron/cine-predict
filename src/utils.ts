@@ -2,6 +2,7 @@ import Papa from "papaparse";
 import { toast } from "react-toastify";
 
 import type { MovieProps } from "./types/MoviesProps";
+import type { RatingProps } from "./types/RatingProps";
 
 export function handleToast(
   messsage: string,
@@ -33,6 +34,28 @@ export async function loadMovies(): Promise<MovieProps[]> {
       skipEmptyLines: true,
       complete: (results) => {
         resolve(results.data as MovieProps[]);
+      },
+      error: (error: Error) => {
+        reject(error);
+      },
+    });
+  });
+}
+
+export async function loadRatings(): Promise<RatingProps[]> {
+  const response = await fetch("/data/ratings.csv");
+  const reader = response.body?.getReader();
+  const result = await reader?.read();
+  const decoder = new TextDecoder("utf-8");
+  const csv = decoder.decode(result?.value);
+
+  return new Promise((resolve, reject) => {
+    Papa.parse(csv, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        resolve(results.data as RatingProps[]);
       },
       error: (error: Error) => {
         reject(error);
@@ -80,9 +103,30 @@ export function genereteListMoviesToLearning(
   return selectedMovies;
 }
 
-export function getRecommendations(selectedIds: number[]): MovieProps[] {
-  // Aqui você faria a chamada para o backend, passando os selectedIds
-  // e receberia as recomendações. Por enquanto, vamos simular isso.
-  console.log("IDs selecionados para recomendação:", selectedIds);
+export async function getRateMovies(
+  moviesListIds: number[],
+  allRatings: RatingProps[],
+) {
+  const moviesRatings = allRatings.filter((rating) =>
+    moviesListIds.includes(rating.movieId),
+  );
+
+  return moviesRatings;
+}
+
+export async function getRecommendations(
+  selectedMoviesIds: number[],
+  allMovies: MovieProps[],
+  allRatings: RatingProps[],
+): Promise<MovieProps[]> {
+  const allGenres = [
+    ...new Set(allMovies.flatMap((movie) => movie.genres.split("|"))),
+  ];
+
+  const moviesRatings = await getRateMovies(selectedMoviesIds, allRatings);
+
+  console.log("✌️selectedMoviesIds --->", selectedMoviesIds);
+  console.log("✌️moviesRatings --->", moviesRatings);
+  console.log("✌️allGenres --->", allGenres);
   return []; // Retorna uma lista vazia por enquanto
 }

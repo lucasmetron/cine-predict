@@ -1,5 +1,6 @@
-export interface RatingPropss {
+export interface RatingProps {
+  userId: number;
   movieId: number;
-  genres: string;
-  title: string;
+  rating: number;
+  timestamp: number;
 }

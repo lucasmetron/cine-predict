@@ -6,11 +6,14 @@ import {
   getRecommendations,
   handleToast,
   loadMovies,
+  loadRatings,
 } from "./utils";
 import type { MovieProps } from "./types/MoviesProps";
+import type { RatingProps } from "./types/RatingProps";
 
 const App: React.FC = () => {
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
+  const [allRatingsState, setAllRatingsState] = useState<RatingProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
@@ -21,23 +24,26 @@ const App: React.FC = () => {
     );
   };
 
-  function loadList() {
+  async function loadList() {
     if (selectedIds.length === 0) {
-      handleToast(
-        "Selecione pelo menos um filme para gerar a predição.",
-        "error",
-      );
+      handleToast("Selecione pelo menos um filme", "error");
       return;
     }
 
-    const recommendations = getRecommendations(selectedIds);
+    const recommendations = await getRecommendations(
+      selectedIds,
+      allMoviesState,
+      allRatingsState,
+    );
     setRecommendations(recommendations);
   }
 
   useEffect(() => {
     (async () => {
       const allMovies = await loadMovies();
+      const allRatings = await loadRatings();
       setAllMoviesState(allMovies);
+      setAllRatingsState(allRatings);
       setMoviesToLearning(genereteListMoviesToLearning(allMovies));
     })();
   }, []);
@@ -78,6 +84,7 @@ const App: React.FC = () => {
                 setMoviesToLearning(
                   genereteListMoviesToLearning(allMoviesState),
                 );
+                setSelectedIds([]);
               }}
             >
               Gerar outra lista de filmes
