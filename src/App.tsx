@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
 
 import "./App.css";
-import { genereteListMoviesToLearning, handleToast, loadMovies } from "./utils";
+import {
+  genereteListMoviesToLearning,
+  getRecommendations,
+  handleToast,
+  loadMovies,
+} from "./utils";
 import type { MovieProps } from "./types/MoviesProps";
 
 const App: React.FC = () => {
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
-  console.log("✌️moviesToLearning --->", moviesToLearning);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  console.log("✌️selectedIds --->", selectedIds);
   const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
 
   const toggleMovie = (id: number): void => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
-    setRecommendations([]);
-    console.log("GENRES");
   };
 
   function loadList() {
@@ -28,6 +29,9 @@ const App: React.FC = () => {
       );
       return;
     }
+
+    const recommendations = getRecommendations(selectedIds);
+    setRecommendations(recommendations);
   }
 
   useEffect(() => {

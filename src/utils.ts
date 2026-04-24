@@ -79,3 +79,10 @@ export function genereteListMoviesToLearning(
 
   return selectedMovies;
 }
+
+export function getRecommendations(selectedIds: number[]): MovieProps[] {
+  // Aqui você faria a chamada para o backend, passando os selectedIds
+  // e receberia as recomendações. Por enquanto, vamos simular isso.
+  console.log("IDs selecionados para recomendação:", selectedIds);
+  return []; // Retorna uma lista vazia por enquanto
+}
