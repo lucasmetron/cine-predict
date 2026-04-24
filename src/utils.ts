@@ -156,10 +156,39 @@ export function buildMovieVectors(
   return vectorizedMovies;
 }
 
+export async function processAllMoviesVectors(
+  allMovies: MovieProps[],
+  allRatings: RatingProps[],
+  allGenres: string[],
+) {
+  // Criamos a instância do Worker
+  const worker = new Worker(new URL("./movie.worker.ts", import.meta.url), {
+    type: "module",
+  });
+
+  // Enviamos os dados para o Worker começar a trabalhar
+  worker.postMessage({
+    allMovies: allMovies,
+    allRatings: allRatings,
+    allGenres: allGenres,
+  });
+  return new Promise((resolve) => {
+    worker.onmessage = (e) => {
+      const allMoviesVector = e.data; // Aqui está o resultado do cálculo
+      console.log("✌️allMoviesVector --->", allMoviesVector);
+
+      worker.terminate(); // Importante: Mata o worker para não consumir memória
+
+      resolve(allMoviesVector);
+    };
+  });
+}
+
 export async function getRecommendations(
   selectedMoviesIds: MovieProps[],
   allMovies: MovieProps[],
   allRatings: RatingProps[],
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
 ): Promise<MovieProps[]> {
   const allGenres = [
     ...new Set(allMovies.flatMap((movie) => movie.genres.split("|"))),
@@ -171,11 +200,16 @@ export async function getRecommendations(
     moviesRatings,
     allGenres,
   );
+  const allMoviesVector = await processAllMoviesVectors(
+    allMovies,
+    allRatings,
+    allGenres,
+  );
 
-  const allMoviesVector = buildMovieVectors(allMovies, allRatings, allGenres);
+  setIsLoading(false);
 
-  console.log("✌️moviesSelectedVector --->", moviesSelectedVector);
   console.log("✌️allMoviesVector --->", allMoviesVector);
+  console.log("✌️moviesSelectedVector --->", moviesSelectedVector);
 
   return []; // Retorna uma lista vazia por enquanto
 }

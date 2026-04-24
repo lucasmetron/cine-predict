@@ -12,10 +12,13 @@
   "dependencies": {
     "papaparse": "^5.5.3",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-loader-spinner": "^8.0.2",
+    "react-toastify": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "@types/node": "^24.12.2",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.14",
@@ -27,7 +30,6 @@
     "globals": "^17.5.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10",
-    "@tensorflow/tfjs-node": "^4.22.0"
+    "vite": "^8.0.10"
   }
 }

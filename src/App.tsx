@@ -33,10 +33,13 @@ const App: React.FC = () => {
       return;
     }
 
+    setIsLoading(true);
+
     const recommendations = await getRecommendations(
       movieSelected,
       allMoviesState,
       allRatingsState,
+      setIsLoading,
     );
 
     setRecommendations(recommendations);
@@ -98,13 +101,7 @@ const App: React.FC = () => {
             <button
               className="btn-predict"
               onClick={async () => {
-                setIsLoading(true);
-
-                setTimeout(async () => {
-                  await loadList();
-
-                  setIsLoading(false);
-                }, 500);
+                await loadList();
               }}
             >
               Gerar Predição
