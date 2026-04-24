@@ -1,5 +1,23 @@
 import Papa from "papaparse";
+import { toast } from "react-toastify";
+
 import type { MovieProps } from "./types/MoviesProps";
+
+export function handleToast(
+  messsage: string,
+  type: "success" | "error" | "info" | "warning",
+): void {
+  toast(messsage, {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    type: type,
+  });
+}
 
 export async function loadMovies(): Promise<MovieProps[]> {
   const response = await fetch("/data/movies.csv");

@@ -1,35 +1,15 @@
 import React, { useEffect, useState } from "react";
 
 import "./App.css";
-import { genereteListMoviesToLearning, loadMovies } from "./utils";
+import { genereteListMoviesToLearning, handleToast, loadMovies } from "./utils";
 import type { MovieProps } from "./types/MoviesProps";
-
-// Definição dos gêneros baseada na documentação do MovieLens
-const GENRES = [
-  "Action",
-  "Adventure",
-  "Animation",
-  "Children",
-  "Comedy",
-  "Crime",
-  "Documentary",
-  "Drama",
-  "Fantasy",
-  "Film-Noir",
-  "Horror",
-  "Musical",
-  "Mystery",
-  "Romance",
-  "Sci-Fi",
-  "Thriller",
-  "War",
-  "Western",
-] as const;
 
 const App: React.FC = () => {
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
+  console.log("✌️moviesToLearning --->", moviesToLearning);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  console.log("✌️selectedIds --->", selectedIds);
   const [recommendations, setRecommendations] = useState<MovieProps[]>([]);
 
   const toggleMovie = (id: number): void => {
@@ -37,8 +17,18 @@ const App: React.FC = () => {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
     setRecommendations([]);
-    console.log("GENRES", GENRES);
+    console.log("GENRES");
   };
+
+  function loadList() {
+    if (selectedIds.length === 0) {
+      handleToast(
+        "Selecione pelo menos um filme para gerar a predição.",
+        "error",
+      );
+      return;
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -92,7 +82,7 @@ const App: React.FC = () => {
             <button
               className="btn-predict"
               onClick={async () => {
-                await loadMovies();
+                await loadList();
               }}
             >
               Gerar Predição
