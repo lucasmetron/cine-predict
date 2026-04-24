@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ThreeDots } from "react-loader-spinner";
 
 import "./App.css";
 import {
@@ -12,6 +13,8 @@ import type { MovieProps } from "./types/MoviesProps";
 import type { RatingProps } from "./types/RatingProps";
 
 const App: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  console.log("✌️isLoading --->", isLoading);
   const [allMoviesState, setAllMoviesState] = useState<MovieProps[]>([]);
   const [allRatingsState, setAllRatingsState] = useState<RatingProps[]>([]);
   const [moviesToLearning, setMoviesToLearning] = useState<MovieProps[]>([]);
@@ -35,6 +38,7 @@ const App: React.FC = () => {
       allMoviesState,
       allRatingsState,
     );
+
     setRecommendations(recommendations);
   }
 
@@ -42,6 +46,7 @@ const App: React.FC = () => {
     (async () => {
       const allMovies = await loadMovies();
       const allRatings = await loadRatings();
+
       setAllMoviesState(allMovies);
       setAllRatingsState(allRatings);
       setMoviesToLearning(genereteListMoviesToLearning(allMovies));
@@ -93,7 +98,13 @@ const App: React.FC = () => {
             <button
               className="btn-predict"
               onClick={async () => {
-                await loadList();
+                setIsLoading(true);
+
+                setTimeout(async () => {
+                  await loadList();
+
+                  setIsLoading(false);
+                }, 500);
               }}
             >
               Gerar Predição
@@ -124,6 +135,20 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isLoading && (
+        <div className="load">
+          <ThreeDots
+            height="80"
+            width="80"
+            color="#c084fc"
+            ariaLabel="audio-loading"
+            wrapperStyle={{}}
+            wrapperClass="wrapper-class"
+            visible={true}
+          />
+        </div>
+      )}
     </div>
   );
 };

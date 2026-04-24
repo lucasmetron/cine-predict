@@ -128,7 +128,6 @@ export function buildMovieVectors(
 
     if (movieRatings.length > 0) {
       const sum = movieRatings.reduce((acc, curr) => acc + curr.rating, 0);
-      console.log("✌️sum --->", sum);
       averageRating = sum / movieRatings.length / 5; // Normaliza para 0-1 (considerando nota máxima 5)
     } else {
       averageRating = 0.6; // Nota neutra padrão caso ninguém tenha avaliado
@@ -167,15 +166,16 @@ export async function getRecommendations(
   ];
 
   const moviesRatings = await getRateMovies(selectedMoviesIds, allRatings);
-  const moviesVector = buildMovieVectors(
+  const moviesSelectedVector = buildMovieVectors(
     selectedMoviesIds,
     moviesRatings,
     allGenres,
   );
 
-  console.log("✌️moviesVector --->", moviesVector);
-  console.log("✌️selectedMoviesIds --->", selectedMoviesIds);
-  console.log("✌️moviesRatings --->", moviesRatings);
-  console.log("✌️allGenres --->", allGenres);
+  const allMoviesVector = buildMovieVectors(allMovies, allRatings, allGenres);
+
+  console.log("✌️moviesSelectedVector --->", moviesSelectedVector);
+  console.log("✌️allMoviesVector --->", allMoviesVector);
+
   return []; // Retorna uma lista vazia por enquanto
 }
