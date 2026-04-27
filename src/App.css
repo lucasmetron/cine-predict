@@ -88,6 +88,7 @@ h1 { font-size: 3.5rem; margin: 0; font-weight: 800; letter-spacing: -1px; }
 }
 
 .movie-list {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -98,7 +99,7 @@ h1 { font-size: 3.5rem; margin: 0; font-weight: 800; letter-spacing: -1px; }
 }
 
 .movie-item {
-  width: 20vw;
+  width: 100%;
   background: #252525;
   border: 1px solid #333;
   padding: 12px;

@@ -190,31 +190,40 @@ export function getTop10Recommendations(
   selectedMoviesVectors: BuildMovieVectorsProps[],
   allMoviesVectors: BuildMovieVectorsProps[],
 ): RecommendedMovie[] {
-  // O tf.tidy garante que a memória da GPU seja limpa no final
   return tf.tidy(() => {
     // 1. Criar o "Super Vetor" (Perfil do Usuário)
-    // Como os selecionados foram gerados na thread principal, o tensor deles está intacto
     const tensoresSelecionados = selectedMoviesVectors.map((m) => m.tensor);
     const perfilUsuario = tf.stack(tensoresSelecionados).mean(0) as tf.Tensor1D;
 
-    const userNorm = tf.norm(perfilUsuario);
+    // Normalizamos o usuário (preparação para a Similaridade de Cosseno)
+    const userNormalized = perfilUsuario.div(tf.norm(perfilUsuario));
 
-    // 2. Comparar o Perfil com TODOS os filmes
-    const recomendacoesComScore = allMoviesVectors.map((movie) => {
-      // 🔥 A MÁGICA DA CORREÇÃO ESTÁ AQUI 🔥
-      // Recriamos o tensor na thread principal usando o array de números que sobreviveu ao Worker
-      const tensorRealDoFilme = tf.tensor1d(movie.rawVector);
+    // 2. A MÁGICA DA OTIMIZAÇÃO: Criar uma Matriz 2D com todos os filmes
+    // Extraímos apenas os arrays de números puros
+    const todosOsArrays = allMoviesVectors.map((m) => m.rawVector);
 
-      // Agora usamos o tensorRealDoFilme para a matemática, e não mais o movie.tensor quebrado
-      const movieNorm = tf.norm(tensorRealDoFilme);
-      const dotProduct = tf.dot(perfilUsuario, tensorRealDoFilme);
+    // Transformamos em uma tabela gigante [9742 linhas, 21 colunas]
+    const dbTensor = tf.tensor2d(todosOsArrays);
 
-      const similarityTensor = dotProduct.div(userNorm.mul(movieNorm));
+    // Normalizamos todos os filmes de uma só vez
+    // O 'euclidean', 1, true garante que ele calcule a norma por linha (filme a filme)
+    const dbNorms = tf.norm(dbTensor, "euclidean", 1, true);
+    const dbNormalized = dbTensor.div(dbNorms);
 
-      // Pega o número real da Placa de Vídeo para o JavaScript
-      let similarity = similarityTensor.dataSync()[0];
+    // 3. CALCULAR TUDO EM UM ÚNICO COMANDO
+    // Multiplicação de matrizes: Compara o usuário com a base inteira em milissegundos
+    const similaritiesTensor = tf.matMul(
+      dbNormalized,
+      userNormalized.expandDims(1),
+    );
 
-      // Prevenção de erro: Se um vetor for 100% zerado, a matemática gera um NaN
+    // 4. BAIXAR OS DADOS (O dataSync é chamado UMA ÚNICA VEZ!)
+    // Isso devolve um array gigante com as 9700 porcentagens
+    const allScores = similaritiesTensor.dataSync();
+
+    // 5. Remontar o objeto agora com as notas
+    const recomendacoesComScore = allMoviesVectors.map((movie, index) => {
+      let similarity = allScores[index];
       if (isNaN(similarity)) similarity = 0;
 
       return {
@@ -225,12 +234,12 @@ export function getTop10Recommendations(
       };
     });
 
-    // 3. Criar um filtro rápido para ignorar o que ele já escolheu
+    // 6. Criar filtro rápido para ignorar o que ele já escolheu
     const idsSelecionados = new Set(
       selectedMoviesVectors.map((m) => m.movieId),
     );
 
-    // 4. Filtrar, Ordenar e Cortar o Top 10
+    // 7. Filtrar, Ordenar e Cortar o Top 10
     const top10 = recomendacoesComScore
       .filter((movie) => !idsSelecionados.has(movie.movieId))
       .sort((a, b) => b.probability - a.probability)
